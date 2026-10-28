@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   ArrowDownRight,
   ArrowRight,
@@ -6,6 +6,8 @@ import {
   Boxes,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign,
   ClipboardList,
   LayoutDashboard,
@@ -17,6 +19,13 @@ import {
   Users,
   Wallet,
   X,
+  Building2,
+  Sparkles,
+  Award,
+  Grid3X3,
+  SlidersHorizontal,
+  Layers,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface PublicWebsiteViewProps {
@@ -92,7 +101,122 @@ const navLinks = [
   { label: 'Features', href: '#features' },
   { label: 'Solutions', href: '#solutions' },
   { label: 'About us', href: '#about' },
+  { label: 'Trusted By', href: '#trusted' },
   { label: 'Contact', href: '#contact' },
+];
+
+interface TrustedCompany {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  branches: string;
+  gradient: string;
+  initials: string;
+  badge: string;
+}
+
+const TRUSTED_COMPANIES: TrustedCompany[] = [
+  {
+    id: 'fms',
+    name: 'Fresh & More Supermarket',
+    category: 'Grocery & Fresh Retail Chain',
+    location: 'Kimironko • Kigali',
+    branches: '3 Branches',
+    gradient: 'from-emerald-700 to-green-600',
+    initials: 'F&M',
+    badge: 'Enterprise M-POS',
+  },
+  {
+    id: 'kfm',
+    name: 'Kigali Fresh Mart',
+    category: 'City Center Fresh Foods & Groceries',
+    location: 'Nyarugenge Downtown',
+    branches: 'Downtown Express',
+    gradient: 'from-teal-700 to-emerald-600',
+    initials: 'KFM',
+    badge: 'Active Focus',
+  },
+  {
+    id: 'iny',
+    name: 'Inyange Distribution Hub',
+    category: 'Dairy, Juices & FMCG Wholesale',
+    location: 'Masaka Industrial Park',
+    branches: 'National Logistics',
+    gradient: 'from-blue-700 to-cyan-600',
+    initials: 'INY',
+    badge: 'High-Volume Partner',
+  },
+  {
+    id: 'ssg',
+    name: 'Simba Supermarket Group',
+    category: 'Retail Chain & Gourmet Bakery',
+    location: 'Kigali Central & Remera',
+    branches: '6 Superstores',
+    gradient: 'from-amber-600 to-orange-600',
+    initials: 'SSG',
+    badge: 'Multi-Lane POS',
+  },
+  {
+    id: 'kfc',
+    name: 'Kigali Farmers Cooperative',
+    category: 'Farm-to-Shelf Organic Groceries',
+    location: 'Gahanga & Musanze Supply',
+    branches: '120+ Farm Partners',
+    gradient: 'from-green-700 to-emerald-500',
+    initials: 'KFC',
+    badge: 'Direct Source',
+  },
+  {
+    id: 'gmx',
+    name: 'Gorillas Minimarket Express',
+    category: 'Urban 24/7 Convenience Stores',
+    location: 'Kacyiru & Kiyovu Outlets',
+    branches: '4 Outlets',
+    gradient: 'from-purple-700 to-indigo-600',
+    initials: 'GMX',
+    badge: 'Rapid Checkout',
+  },
+  {
+    id: 'sc',
+    name: 'Sawa City Retail Outlets',
+    category: 'Neighborhood Convenience & Deli',
+    location: 'Gishushu & Remera',
+    branches: '4 Locations',
+    gradient: 'from-indigo-700 to-blue-600',
+    initials: 'SC',
+    badge: 'Barcode Certified',
+  },
+  {
+    id: 'brh',
+    name: 'Bakhresa Grain & Consumer Hub',
+    category: 'Flour, Staples & FMCG Distro',
+    location: 'Prime Economic Zone',
+    branches: 'Regional Depot',
+    gradient: 'from-rose-700 to-red-600',
+    initials: 'BRH',
+    badge: 'Wholesale Depot',
+  },
+  {
+    id: 'ndl',
+    name: 'Ndoli Supermarket & Pantry',
+    category: 'Everyday Household Grocers',
+    location: 'Kabeza & Kanombe',
+    branches: '2 Supermarkets',
+    gradient: 'from-sky-700 to-blue-700',
+    initials: 'NDL',
+    badge: 'Live Stock Sync',
+  },
+  {
+    id: 'nyu',
+    name: 'Nyungwe Specialty Organics',
+    category: 'Specialty Teas, Honey & Spices',
+    location: 'Kigali Heights & Nyarutarama',
+    branches: 'Retail & Tasting Hub',
+    gradient: 'from-emerald-800 to-teal-700',
+    initials: 'NYU',
+    badge: 'Specialty Retail',
+  },
 ];
 
 export const PublicWebsiteView: React.FC<PublicWebsiteViewProps> = ({
@@ -101,6 +225,20 @@ export const PublicWebsiteView: React.FC<PublicWebsiteViewProps> = ({
 }) => {
   const openApp = onLaunchWebApp || onOpenWebApp || (() => {});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [trustedViewMode, setTrustedViewMode] = useState<'slider' | 'grid'>('slider');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  };
 
   const handleNavClick = () => setMobileMenuOpen(false);
 
@@ -507,6 +645,234 @@ export const PublicWebsiteView: React.FC<PublicWebsiteViewProps> = ({
             >
               Get started today <ArrowRight className="h-4 w-4" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* TRUSTED BY LEADING COMPANIES / LOGO SLIDER SECTION           */}
+      {/* Positioned directly above the footer                          */}
+      {/* ============================================================ */}
+      <section id="trusted" className="border-t border-slate-200/90 bg-white py-16 sm:py-20 overflow-hidden relative">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 pb-10 border-b border-slate-100">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-extrabold text-[#0c4a26] tracking-[0.14em] uppercase">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Companies Trusted Us</span>
+              </div>
+              <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-950 tracking-tight">
+                Trusted by leading businesses &amp; supermarkets
+              </h2>
+              <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                From bustling neighborhood minimarkets to multi-branch supermarket chains across Rwanda, retail teams rely on Fresh &amp; More M-POS for fast barcode checkouts, accurate stock tracking, and unified business operations.
+              </p>
+            </div>
+
+            {/* Interactive Mode & Scroll Controls */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setTrustedViewMode('slider')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    trustedViewMode === 'slider'
+                      ? 'bg-white text-[#0c4a26] shadow-xs font-black'
+                      : 'hover:text-slate-900'
+                  }`}
+                  title="Continuous smooth marquee flow"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Logo Slider</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTrustedViewMode('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    trustedViewMode === 'grid'
+                      ? 'bg-white text-[#0c4a26] shadow-xs font-black'
+                      : 'hover:text-slate-900'
+                  }`}
+                  title="Evenly spaced grid view"
+                >
+                  <Grid3X3 className="w-3.5 h-3.5" />
+                  <span>Grid View</span>
+                </button>
+              </div>
+
+              {trustedViewMode === 'slider' && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={scrollLeft}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 transition-colors shadow-2xs cursor-pointer"
+                    aria-label="Scroll left"
+                    title="Scroll left"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={scrollRight}
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 transition-colors shadow-2xs cursor-pointer"
+                    aria-label="Scroll right"
+                    title="Scroll right"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* LOGO PRESENTATION: SLIDER (MARQUEE) OR RESPONSIVE GRID */}
+        {trustedViewMode === 'slider' ? (
+          <div className="relative mt-8">
+            {/* Left and right gradient fade edges */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-r from-white to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-l from-white to-transparent z-10" />
+
+            {/* Marquee Track */}
+            <div
+              ref={scrollContainerRef}
+              className="overflow-x-auto no-scrollbar scroll-smooth py-3"
+            >
+              <div className="animate-marquee flex items-center gap-5 px-6">
+                {/* Loop 1 */}
+                {TRUSTED_COMPANIES.map((company) => (
+                  <div
+                    key={`track-1-${company.id}`}
+                    className="group relative flex w-72 sm:w-80 shrink-0 items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-xs hover:shadow-md hover:border-emerald-500/50 hover:-translate-y-1 transition-all duration-200 cursor-default"
+                  >
+                    <div
+                      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${company.gradient} text-white font-black text-sm shadow-md shadow-emerald-950/10 tracking-wider`}
+                    >
+                      {company.initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-extrabold text-sm text-slate-900 truncate group-hover:text-[#0c4a26] transition-colors">
+                          {company.name}
+                        </h4>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      </div>
+                      <p className="text-[11.5px] text-slate-500 font-medium truncate mt-0.5">
+                        {company.category}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[10.5px]">
+                        <span className="font-semibold text-slate-500 truncate max-w-[140px]">
+                          {company.location}
+                        </span>
+                        <span className="inline-block px-1.5 py-0.5 rounded-md font-bold text-[9.5px] bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                          {company.branches}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Loop 2 (seamless infinite scroll duplicate) */}
+                {TRUSTED_COMPANIES.map((company) => (
+                  <div
+                    key={`track-2-${company.id}`}
+                    className="group relative flex w-72 sm:w-80 shrink-0 items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4.5 shadow-xs hover:shadow-md hover:border-emerald-500/50 hover:-translate-y-1 transition-all duration-200 cursor-default"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${company.gradient} text-white font-black text-sm shadow-md shadow-emerald-950/10 tracking-wider`}
+                    >
+                      {company.initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-extrabold text-sm text-slate-900 truncate group-hover:text-[#0c4a26] transition-colors">
+                          {company.name}
+                        </h4>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      </div>
+                      <p className="text-[11.5px] text-slate-500 font-medium truncate mt-0.5">
+                        {company.category}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[10.5px]">
+                        <span className="font-semibold text-slate-500 truncate max-w-[140px]">
+                          {company.location}
+                        </span>
+                        <span className="inline-block px-1.5 py-0.5 rounded-md font-bold text-[9.5px] bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                          {company.branches}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="text-center mt-3">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Hover logo card to pause marquee • Use arrows to scroll manually
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* RESPONSIVE GRID VIEW */
+          <div className="mx-auto max-w-7xl px-5 sm:px-8 mt-8">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              {TRUSTED_COMPANIES.map((company) => (
+                <div
+                  key={`grid-${company.id}`}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:border-emerald-500/50 hover:-translate-y-1 transition-all duration-200"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${company.gradient} text-white font-black text-xs shadow-md shadow-emerald-950/10 tracking-wider`}
+                      >
+                        {company.initials}
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-50 text-[#0c4a26] border border-emerald-200/60">
+                        {company.branches}
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-sm text-slate-900 group-hover:text-[#0c4a26] transition-colors leading-snug">
+                      {company.name}
+                    </h4>
+                    <p className="text-[11.5px] text-slate-500 font-medium mt-1 leading-relaxed">
+                      {company.category}
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[10.5px]">
+                    <span className="font-medium text-slate-400">{company.location}</span>
+                    <span className="font-bold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Active
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* BOTTOM METRICS BADGE ROW */}
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 mt-12 pt-8 border-t border-slate-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
+              <p className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">100+</p>
+              <p className="text-xs font-bold text-slate-500 mt-0.5">Active Checkout Lanes</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
+              <p className="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight">99.98%</p>
+              <p className="text-xs font-bold text-slate-500 mt-0.5">Uptime &amp; Cloud Reliability</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
+              <p className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">&lt; 0.2s</p>
+              <p className="text-xs font-bold text-slate-500 mt-0.5">Barcode Scan Speed</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
+              <p className="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight">100%</p>
+              <p className="text-xs font-bold text-slate-500 mt-0.5">Offline Checkout Ready</p>
+            </div>
           </div>
         </div>
       </section>
