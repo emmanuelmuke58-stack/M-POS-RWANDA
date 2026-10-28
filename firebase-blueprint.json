@@ -1,0 +1,301 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Grocery store inventory product item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "sku": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "barcode": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "sellingPrice": {
+          "type": "number"
+        },
+        "costPrice": {
+          "type": "number"
+        },
+        "stock": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Inactive"]
+        }
+      },
+      "required": ["id", "name", "category", "sellingPrice", "stock", "unit", "status"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Completed POS checkout transaction record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "time": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "cashier": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "customerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "total": {
+          "type": "number"
+        },
+        "subtotal": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Completed", "Pending", "Refunded", "Cancelled"]
+        }
+      },
+      "required": ["id", "reference", "date", "cashier", "total", "paymentMethod", "status"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer and credit debtor profile",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "outstandingBalance": {
+          "type": "number"
+        },
+        "creditLimit": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Overdue", "Blocked"]
+        }
+      },
+      "required": ["id", "name", "phone", "creditLimit", "outstandingBalance", "status"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Staff profile and authentication account",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Super Admin", "Business Owner", "Manager", "Cashier", "Stock Manager"]
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "branch": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Suspended"]
+        }
+      },
+      "required": ["id", "name", "role", "email", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable audit trail of system events",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "user": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "module": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "record": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["Info", "Warning", "Critical"]
+        }
+      },
+      "required": ["id", "date", "user", "action", "module", "record", "severity"]
+    },
+    "HeldSale": {
+      "title": "HeldSale",
+      "description": "Parked cart transaction for POS lane",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "total": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "reference", "total"]
+    },
+    "BusinessSettings": {
+      "title": "BusinessSettings",
+      "description": "Store configuration and tax rules",
+      "type": "object",
+      "properties": {
+        "businessName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "tagline": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "tin": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "currency": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "defaultTaxRate": {
+          "type": "number"
+        }
+      },
+      "required": ["businessName", "currency", "defaultTaxRate"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Grocery store inventory items"
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Completed POS sales history"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Store customers and accounts"
+    },
+    "/users/{userId}": {
+      "schema": "UserAccount",
+      "description": "System staff accounts"
+    },
+    "/auditLogs/{auditLogId}": {
+      "schema": "AuditLog",
+      "description": "Store security and audit records"
+    },
+    "/heldSales/{heldSaleId}": {
+      "schema": "HeldSale",
+      "description": "Parked or held orders"
+    },
+    "/settings/{settingsId}": {
+      "schema": "BusinessSettings",
+      "description": "Store settings"
+    }
+  }
+}

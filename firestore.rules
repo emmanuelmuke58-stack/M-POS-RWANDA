@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity Validation Helpers
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'sellingPrice', 'stock', 'unit', 'status']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.category is string && data.category.size() <= 100 &&
+        data.sellingPrice is number && data.sellingPrice >= 0 &&
+        data.stock is number &&
+        data.unit is string && data.unit.size() <= 32 &&
+        (data.status == 'Active' || data.status == 'Inactive');
+    }
+
+    function isValidSale(data) {
+      return data.keys().hasAll(['id', 'reference', 'date', 'cashier', 'total', 'paymentMethod', 'status']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.reference is string && data.reference.size() <= 64 &&
+        data.date is string && data.date.size() <= 32 &&
+        data.cashier is string && data.cashier.size() <= 100 &&
+        data.total is number && data.total >= 0 &&
+        data.paymentMethod is string && data.paymentMethod.size() <= 64 &&
+        (data.status == 'Completed' || data.status == 'Pending' || data.status == 'Refunded' || data.status == 'Cancelled');
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['id', 'name', 'phone', 'creditLimit', 'outstandingBalance', 'status']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() <= 150 &&
+        data.phone is string && data.phone.size() <= 50 &&
+        data.creditLimit is number &&
+        data.outstandingBalance is number &&
+        (data.status == 'Active' || data.status == 'Overdue' || data.status == 'Blocked');
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['id', 'date', 'user', 'action', 'module', 'record', 'severity']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.date is string && data.date.size() <= 32 &&
+        data.user is string && data.user.size() <= 100 &&
+        data.action is string && data.action.size() <= 100 &&
+        data.module is string && data.module.size() <= 100 &&
+        data.record is string && data.record.size() <= 200 &&
+        (data.severity == 'Info' || data.severity == 'Warning' || data.severity == 'Critical');
+    }
+
+    function isValidHeldSale(data) {
+      return data.keys().hasAll(['id', 'reference', 'total']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.reference is string && data.reference.size() <= 64 &&
+        data.total is number && data.total >= 0;
+    }
+
+    // Collections
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(productId) && isValidProduct(incoming());
+      allow update: if isSignedIn() && isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isSignedIn() && isValidId(productId);
+    }
+
+    match /sales/{saleId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(saleId) && isValidSale(incoming());
+      allow update: if isSignedIn() && isValidId(saleId) && isValidSale(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'paidAmount', 'balanceDue']);
+      allow delete: if false; // Preserve financial transactions
+    }
+
+    match /customers/{customerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming());
+      allow update: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming());
+      allow delete: if isSignedIn() && isValidId(customerId);
+    }
+
+    match /auditLogs/{auditLogId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(auditLogId) && isValidAuditLog(incoming());
+      allow update, delete: if false; // Immutable audit trail
+    }
+
+    match /heldSales/{heldSaleId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(heldSaleId) && isValidHeldSale(incoming());
+      allow delete: if isSignedIn() && isValidId(heldSaleId);
+    }
+
+    match /settings/{settingsId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(settingsId);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(userId);
+    }
+  }
+}

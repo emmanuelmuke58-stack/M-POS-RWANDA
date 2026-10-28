@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Fresh & More M-POS — Grocery & Mini-Market Management</title>
+    <meta name="description" content="A professional, responsive management system optimized for grocery retail, featuring fast POS, inventory tracking, and performance analytics." />
+    <meta property="og:title" content="Fresh & More M-POS — Grocery & Mini-Market Management" />
+    <meta property="og:description" content="A professional, responsive management system optimized for grocery retail, featuring fast POS, inventory tracking, and performance analytics." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0c4a26" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Fresh M-POS" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        const NativeWebSocket = window.WebSocket;
+        if (NativeWebSocket) {
+          window.WebSocket = function(url, protocols) {
+            const isViteHmr =
+              (typeof protocols === 'string' && protocols.startsWith('vite-')) ||
+              (Array.isArray(protocols) && protocols.some(function(p) { return typeof p === 'string' && p.startsWith('vite-'); })) ||
+              (typeof url === 'string' && (url.includes('token=') || url.includes('@vite')));
+
+            if (isViteHmr) {
+              const fakeSocket = new EventTarget();
+              fakeSocket.url = String(url);
+              fakeSocket.protocol = Array.isArray(protocols) ? protocols[0] || '' : (protocols || '');
+              fakeSocket.readyState = 1;
+              fakeSocket.OPEN = 1;
+              fakeSocket.CLOSED = 3;
+              fakeSocket.CLOSING = 2;
+              fakeSocket.CONNECTING = 0;
+              fakeSocket.bufferedAmount = 0;
+              fakeSocket.extensions = '';
+              fakeSocket.binaryType = 'blob';
+              fakeSocket.send = function() {};
+              fakeSocket.close = function() {};
+
+              setTimeout(function() {
+                const openEvent = new Event('open');
+                fakeSocket.dispatchEvent(openEvent);
+                if (typeof fakeSocket.onopen === 'function') {
+                  fakeSocket.onopen(openEvent);
+                }
+              }, 0);
+
+              return fakeSocket;
+            }
+
+            return new NativeWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = NativeWebSocket.prototype;
+          window.WebSocket.CONNECTING = 0;
+          window.WebSocket.OPEN = 1;
+          window.WebSocket.CLOSING = 2;
+          window.WebSocket.CLOSED = 3;
+        }
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (event.reason && (typeof event.reason === 'string' ? event.reason.includes('WebSocket') : event.reason?.message?.includes('WebSocket'))) {
+            event.preventDefault();
+          }
+        });
+        window.addEventListener('error', function(event) {
+          if (event.message && (event.message.includes('WebSocket') || event.message.includes('@vite/client'))) {
+            event.preventDefault();
+          }
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
