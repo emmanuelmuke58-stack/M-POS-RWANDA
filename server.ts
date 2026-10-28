@@ -412,6 +412,41 @@ app.post('/api/auth/setup-initial-admin', (req: Request, res: Response) => {
   });
 });
 
+// Temporary owner-controlled Super Admin recovery. Remove SUPER_ADMIN_RECOVERY_TOKEN from Render immediately after use.
+let superAdminRecoveryUsed = false;
+app.post('/api/auth/recover-super-admin', (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const expectedToken = process.env.SUPER_ADMIN_RECOVERY_TOKEN || '';
+  const suppliedToken = req.header('x-admin-recovery-token') || '';
+  const expected = Buffer.from(expectedToken, 'utf8');
+  const supplied = Buffer.from(suppliedToken, 'utf8');
+  const authorized = expected.length > 0 && expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
+  if (!authorized || superAdminRecoveryUsed) {
+    res.status(401).json({ success: false, error: 'Recovery authorization failed or recovery is unavailable.' });
+    return;
+  }
+  const { identifier, newPassword } = req.body || {};
+  if (typeof identifier !== 'string' || !identifier.trim() || typeof newPassword !== 'string' || newPassword.length < 12) {
+    res.status(400).json({ success: false, error: 'Enter your registered email or phone and a new password of at least 12 characters.' });
+    return;
+  }
+  const admin = db.findUserByIdentifier(identifier);
+  if (!admin || admin.role !== 'Super Admin' || admin.status !== 'Active') {
+    res.status(404).json({ success: false, error: 'No active Super Admin account matches that identifier.' });
+    return;
+  }
+  const { passwordHash, passwordSalt, iterations } = hashPassword(newPassword);
+  const updated = db.updateUser(admin.id, { passwordHash, passwordSalt, iterations });
+  if (!updated) {
+    res.status(500).json({ success: false, error: 'Password could not be updated.' });
+    return;
+  }
+  db.revokeUserSessions(admin.id);
+  superAdminRecoveryUsed = true;
+  logServerAudit(admin.name, 'Super Admin', 'Super Admin Password Recovered', 'Authentication', 'Super Admin password reset', 'Temporary recovery token used; sessions revoked', 'Critical');
+  res.json({ success: true, message: 'Password reset succeeded. Remove SUPER_ADMIN_RECOVERY_TOKEN from Render now.' });
+});
+
 // POST /api/auth/login - Production Login with Brute-Force Rate Limiting
 app.post('/api/auth/login', (req: Request, res: Response) => {
   const { identifier, password, rememberMe } = req.body;
