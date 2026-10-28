@@ -6,6 +6,11 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/M-POS-RWANDA/',
+
+    plugins: [
+      react(),
+      tailwindcss(),
     plugins: [
       react(),
       tailwindcss(),
