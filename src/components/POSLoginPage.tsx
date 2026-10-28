@@ -53,7 +53,6 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
-  const [simulatedCodeReceived, setSimulatedCodeReceived] = useState<string | null>(null);
 
   // Contact Support Modal State
   const [supportModalOpen, setSupportModalOpen] = useState(false);
@@ -146,7 +145,6 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
     e.preventDefault();
     setForgotError(null);
     setForgotSuccess(null);
-    setSimulatedCodeReceived(null);
 
     if (!forgotIdentifier.trim()) {
       setForgotError('Please enter your registered email address or phone number.');
@@ -169,10 +167,6 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
       }
 
       setForgotSuccess(data.message);
-      if (data.simulatedCode) {
-        setSimulatedCodeReceived(data.simulatedCode);
-        setForgotCode(data.simulatedCode);
-      }
       setForgotStep('verify');
     } catch {
       setForgotError('Connection error to authentication backend. Please check network.');
@@ -562,16 +556,12 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
               </div>
             )}
 
-            {/* Simulated verification code display for demo review */}
-            {simulatedCodeReceived && (
-              <div className="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
-                <p className="font-semibold text-blue-900">Simulated SMS / Email Dispatch:</p>
-                <p className="text-blue-700 mt-0.5">
-                  Verification Code:{' '}
-                  <strong className="font-mono text-sm tracking-wider text-blue-950 bg-white px-2 py-0.5 rounded border border-blue-300">
-                    {simulatedCodeReceived}
-                  </strong>{' '}
-                  (Expires in 10 minutes)
+            {/* Secure delivery notice */}
+            {forgotSuccess && forgotStep === 'verify' && (
+              <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                <p className="font-semibold text-slate-800">Secure Dispatch Notice:</p>
+                <p className="text-slate-600 mt-0.5">
+                  If your account is configured for automated delivery, check your SMS or email inbox for your 6-digit code. For assisted resets, please contact your store administrator.
                 </p>
               </div>
             )}

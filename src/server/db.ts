@@ -349,69 +349,37 @@ class PersistentDatabase {
       },
     ];
 
-    // 3. Initial Super Admin and Staff Accounts (Hashed with PBKDF2 100,000 iterations)
-    const adminEmail = process.env.INITIAL_SUPER_ADMIN_EMAIL || 'admin@freshandmore.rw';
-    const adminPass = process.env.INITIAL_SUPER_ADMIN_PASSWORD || 'SuperAdmin2026!RwandaSecure';
-    const adminPhone = process.env.INITIAL_SUPER_ADMIN_PHONE || '+250 788 000 001';
-    const adminName = process.env.INITIAL_SUPER_ADMIN_NAME || 'System Administrator';
+    // 3. Initial Super Admin Provisioning (Strictly via Environment Variables or One-Time Setup Endpoint)
+    // NEVER create accounts with publicly known default passwords.
+    const envAdminEmail = process.env.INITIAL_SUPER_ADMIN_EMAIL;
+    const envAdminPass = process.env.INITIAL_SUPER_ADMIN_PASSWORD;
+    const envAdminPhone = process.env.INITIAL_SUPER_ADMIN_PHONE || '+250 788 000 001';
+    const envAdminName = process.env.INITIAL_SUPER_ADMIN_NAME || 'System Administrator';
 
-    const adminHash = hashPassword(adminPass);
-    this.data.users.push({
-      id: 'usr-admin-initial',
-      name: adminName,
-      role: 'Super Admin',
-      email: normalizeEmail(adminEmail),
-      phone: adminPhone,
-      branch: 'All Branches',
-      assignedCompanyIds: [],
-      status: 'Active',
-      passwordHash: adminHash.passwordHash,
-      passwordSalt: adminHash.passwordSalt,
-      iterations: adminHash.iterations,
-      lastLogin: nowIso,
-      createdAt: nowIso,
-    });
-
-    // Initial business manager and cashier accounts with strong salted PBKDF2 hashes
-    const cashierPass = process.env.INITIAL_CASHIER_PASSWORD || 'Cashier2026!RwandaSecure';
-    const cashierHash = hashPassword(cashierPass);
-    this.data.users.push({
-      id: 'usr-cashier-initial',
-      name: 'Marie Claire U.',
-      role: 'Cashier',
-      companyId: 'comp-1',
-      assignedCompanyIds: ['comp-1'],
-      email: 'marie@freshandmore.rw',
-      phone: '+250 785 112 900',
-      branch: 'Main Branch',
-      status: 'Active',
-      passwordHash: cashierHash.passwordHash,
-      passwordSalt: cashierHash.passwordSalt,
-      iterations: cashierHash.iterations,
-      lastLogin: nowIso,
-      createdAt: nowIso,
-    });
-
-    const ownerPass = process.env.INITIAL_OWNER_PASSWORD || 'Owner2026!RwandaSecure';
-    const ownerHash = hashPassword(ownerPass);
-    this.data.users.push({
-      id: 'usr-owner-initial',
-      name: 'Emmanuel Muke',
-      role: 'Business Owner',
-      companyId: 'comp-1',
-      assignedCompanyIds: ['comp-1'],
-      email: 'emmanuel@freshandmore.rw',
-      phone: '+250 788 300 100',
-      branch: 'All Branches',
-      status: 'Active',
-      passwordHash: ownerHash.passwordHash,
-      passwordSalt: ownerHash.passwordSalt,
-      iterations: ownerHash.iterations,
-      lastLogin: nowIso,
-      createdAt: nowIso,
-    });
-
-    console.log(`[DB] Initial accounts provisioned with PBKDF2 hashes (Super Admin: ${adminEmail})`);
+    if (envAdminEmail && envAdminPass) {
+      if (envAdminPass.length < 8) {
+        throw new Error('INITIAL_SUPER_ADMIN_PASSWORD must be at least 8 characters long.');
+      }
+      const adminHash = hashPassword(envAdminPass);
+      this.data.users.push({
+        id: 'usr-admin-initial',
+        name: envAdminName,
+        role: 'Super Admin',
+        email: normalizeEmail(envAdminEmail),
+        phone: envAdminPhone,
+        branch: 'All Branches',
+        assignedCompanyIds: [],
+        status: 'Active',
+        passwordHash: adminHash.passwordHash,
+        passwordSalt: adminHash.passwordSalt,
+        iterations: adminHash.iterations,
+        lastLogin: nowIso,
+        createdAt: nowIso,
+      });
+      console.log(`[DB] Production Super Admin securely initialized from environment: ${normalizeEmail(envAdminEmail)}`);
+    } else {
+      console.log('[DB] No default administrative credentials configured in environment. System requires secure one-time setup via /api/auth/setup-initial-admin.');
+    }
   }
 
   public save(): void {

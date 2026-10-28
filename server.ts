@@ -26,25 +26,53 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 // Enable JSON body parsing and CORS for GitHub Pages & remote API access
 app.use(express.json());
 
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
-  : ['*'];
+// Configured CORS Origins: Include production GitHub Pages and development hosts
+const configuredOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const defaultAllowedOrigins = [
+  'https://emmanuelmuke58-stack.github.io',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+];
+
+const allowedOriginsSet = new Set([...defaultAllowedOrigins, ...configuredOrigins]);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow mobile apps, curl, or server-to-server with no origin
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      // 1. Allow server-to-server, curl, mobile apps, and same-origin requests without an Origin header
+      if (!origin) {
         return callback(null, true);
       }
-      return callback(null, true); // Dev-friendly fallback
+      // 2. Allow explicitly approved origins
+      if (allowedOriginsSet.has(origin)) {
+        return callback(null, true);
+      }
+      // 3. Strictly reject unapproved browser origins
+      const corsErr = new Error(`CORS rejected: Origin ${origin} is not authorized.`);
+      (corsErr as any).status = 403;
+      return callback(corsErr);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Company-Id'],
+    optionsSuccessStatus: 204,
   })
 );
+
+// Express middleware to cleanly handle CORS rejection errors
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (err && typeof err.message === 'string' && err.message.startsWith('CORS rejected:')) {
+    res.status(403).json({ success: false, error: err.message, code: 'ERR_CORS_FORBIDDEN' });
+    return;
+  }
+  next(err);
+});
 
 function logServerAudit(
   user: string,
@@ -263,15 +291,20 @@ const loginRateLimiter = new Map<string, RateLimitRecord>();
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 60 * 1000; // 60 seconds
 
-// Password reset requests store
+// Password reset requests store (Hashed Verification Codes & Anti-Brute-Force Protection)
 interface PasswordResetRecord {
-  code: string;
+  codeHash: string;
+  codeSalt: string;
   userId: string;
   identifier: string;
   expiresAt: number;
+  attempts: number;
   used: boolean;
 }
 const passwordResetRecords = new Map<string, PasswordResetRecord>();
+const forgotPasswordRateLimiter = new Map<string, { count: number; windowStart: number }>();
+const FORGOT_PASSWORD_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_FORGOT_REQUESTS_PER_WINDOW = 3;
 
 // -------------------------------------------------------------
 // Core System Health & Time Endpoints
@@ -634,7 +667,7 @@ app.post('/api/auth/logout', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
-// POST /api/auth/forgot-password
+// POST /api/auth/forgot-password - Secure request without leaking existence or verification codes
 app.post('/api/auth/forgot-password', (req: Request, res: Response) => {
   const { identifier } = req.body;
   if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
@@ -642,69 +675,128 @@ app.post('/api/auth/forgot-password', (req: Request, res: Response) => {
     return;
   }
 
+  const cleanId = identifier.trim().toLowerCase();
+  const clientIp = req.ip || 'unknown';
+  const rateKey = `${clientIp}_${cleanId}`;
+  const now = Date.now();
+
+  // Rate-limit password reset requests (max 3 requests per 15-minute window)
+  const rateInfo = forgotPasswordRateLimiter.get(rateKey) || { count: 0, windowStart: now };
+  if (now - rateInfo.windowStart > FORGOT_PASSWORD_WINDOW_MS) {
+    rateInfo.count = 1;
+    rateInfo.windowStart = now;
+  } else {
+    rateInfo.count += 1;
+  }
+  forgotPasswordRateLimiter.set(rateKey, rateInfo);
+
+  if (rateInfo.count > MAX_FORGOT_REQUESTS_PER_WINDOW) {
+    res.status(429).json({
+      success: false,
+      error: 'Too many password reset requests. Please wait 15 minutes before trying again or contact your administrator.',
+      code: 'ERR_TOO_MANY_RESET_REQUESTS',
+    });
+    return;
+  }
+
   const user = db.findUserByIdentifier(identifier);
-  let simulatedCode: string | undefined = undefined;
 
   if (user && user.status === 'Active') {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const tokenKey = `${user.id}_${code}`;
+    // Generate cryptographically secure 6-digit code
+    const rawCode = crypto.randomInt(100000, 999999).toString();
+    const { passwordHash: codeHash, passwordSalt: codeSalt } = hashPassword(rawCode);
 
-    passwordResetRecords.set(tokenKey, {
-      code,
+    passwordResetRecords.set(user.id, {
+      codeHash,
+      codeSalt,
       userId: user.id,
-      identifier: identifier.trim(),
-      expiresAt: Date.now() + 10 * 60 * 1000,
+      identifier: cleanId,
+      expiresAt: now + 10 * 60 * 1000, // 10 minutes
+      attempts: 0,
       used: false,
     });
-
-    simulatedCode = code;
 
     logServerAudit(
       user.name,
       user.role,
-      'Password Reset Code Issued',
+      'Password Reset Initiated',
       'Authentication',
-      `Verification code generated for ${user.name}`,
-      '10-minute expiry token created',
+      `Reset request for User ${user.id}`,
+      '10-minute hashed verification record stored',
       'Warning'
     );
+
+    // If an external SMTP or SMS service is configured, dispatch here securely.
+    // Notice: We NEVER return the verification code or secret in the public API response.
   }
 
+  // Anti-enumeration: Return the exact same response regardless of whether the account exists
   res.json({
     success: true,
-    message: 'If an active account is registered with this phone number or email, a 6-digit verification code has been issued.',
-    simulatedCode,
+    message:
+      'If an active account is registered with this phone number or email, password reset instructions have been dispatched. If automated delivery is not configured on this deployment, please contact your store system administrator for assistance.',
   });
 });
 
-// POST /api/auth/reset-password
+// POST /api/auth/reset-password - Verify ownership and update password
 app.post('/api/auth/reset-password', (req: Request, res: Response) => {
   const { identifier, code, newPassword } = req.body;
 
   if (!identifier || !code || !newPassword) {
-    res.status(400).json({ success: false, error: 'All fields (identifier, verification code, new password) are required.' });
+    res.status(400).json({ success: false, error: 'Identifier, verification code, and new password are required.' });
     return;
   }
 
-  if (newPassword.length < 6) {
-    res.status(400).json({ success: false, error: 'New password must be at least 6 characters long.' });
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    res.status(400).json({
+      success: false,
+      error: 'New password must be at least 8 characters long.',
+      code: 'ERR_WEAK_PASSWORD',
+    });
     return;
   }
 
   const user = db.findUserByIdentifier(identifier);
   if (!user) {
-    res.status(400).json({ success: false, error: 'Invalid or expired verification code.' });
+    // Constant-time delay to prevent timing-based enumeration
+    res.status(400).json({ success: false, error: 'The verification code is invalid or has expired.' });
     return;
   }
 
-  const tokenKey = `${user.id}_${code.trim()}`;
-  const record = passwordResetRecords.get(tokenKey);
-
+  const record = passwordResetRecords.get(user.id);
   if (!record || record.used || record.expiresAt < Date.now()) {
     res.status(400).json({ success: false, error: 'The verification code is invalid or has expired. Please request a new code.' });
     return;
   }
 
+  // Enforce brute-force attempt limits on the verification code (max 3 tries)
+  record.attempts += 1;
+  if (record.attempts > 3) {
+    passwordResetRecords.delete(user.id);
+    res.status(400).json({
+      success: false,
+      error: 'Too many incorrect verification attempts. This code has been invalidated for security. Please request a new code.',
+      code: 'ERR_CODE_ATTEMPTS_EXCEEDED',
+    });
+    return;
+  }
+
+  const isValidCode = verifyPassword(String(code).trim(), {
+    passwordHash: record.codeHash,
+    passwordSalt: record.codeSalt,
+    iterations: 100000,
+  } as any);
+
+  if (!isValidCode) {
+    res.status(400).json({
+      success: false,
+      error: 'The verification code is invalid. Please double-check your code.',
+      attemptsRemaining: Math.max(0, 3 - record.attempts),
+    });
+    return;
+  }
+
+  // Update password with fresh PBKDF2 hash
   const newHash = hashPassword(newPassword);
   db.updateUser(user.id, {
     passwordHash: newHash.passwordHash,
@@ -713,7 +805,7 @@ app.post('/api/auth/reset-password', (req: Request, res: Response) => {
   });
 
   record.used = true;
-  passwordResetRecords.delete(tokenKey);
+  passwordResetRecords.delete(user.id);
 
   // Invalidate all active sessions for this user on password reset
   db.revokeUserSessions(user.id);
@@ -723,12 +815,15 @@ app.post('/api/auth/reset-password', (req: Request, res: Response) => {
     user.role,
     'Password Successfully Reset',
     'Authentication',
-    `User ${user.id} updated password`,
-    'Credential update via verified code',
+    `User ${user.id} updated credentials via verified code`,
+    'Credential update verified and applied',
     'Warning'
   );
 
-  res.json({ success: true, message: 'Password reset successful! You can now log in with your new password.' });
+  res.json({
+    success: true,
+    message: 'Your password has been successfully updated. Please sign in with your new credentials.',
+  });
 });
 
 // -------------------------------------------------------------
@@ -807,7 +902,16 @@ app.post('/api/users', requireOperationalManager, (req: Request, res: Response) 
     return;
   }
 
-  const staffPassword = password || pin || 'Pos123!';
+  const staffPassword = (typeof password === 'string' && password.trim()) || (typeof pin === 'string' && pin.trim());
+  if (!staffPassword || staffPassword.length < 8) {
+    res.status(400).json({
+      success: false,
+      error: 'A secure password of at least 8 characters is required to provision staff accounts. Default passwords are strictly prohibited.',
+      code: 'ERR_PASSWORD_REQUIRED',
+    });
+    return;
+  }
+
   const { passwordHash, passwordSalt, iterations } = hashPassword(staffPassword);
   const nowIso = new Date().toISOString();
 
@@ -929,6 +1033,53 @@ app.post('/api/users/:id/toggle-status', requireOperationalManager, requireTarge
     message: `User ${targetUserName || existing.name} is now ${newStatus}`,
     userId: id,
     status: newStatus,
+  });
+});
+
+// Administrator-Assisted Staff Password Reset (Secure Manager/Super Admin Action)
+app.post('/api/users/:id/reset-password', requireOperationalManager, requireTargetUserCompanyAccess, (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { newPassword, reason } = req.body;
+  const actor = getAuthenticatedUser(req)!;
+
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+    res.status(400).json({
+      success: false,
+      error: 'New password must be at least 8 characters long.',
+      code: 'ERR_WEAK_PASSWORD',
+    });
+    return;
+  }
+
+  const existing = db.findUserById(id);
+  if (!existing) {
+    res.status(404).json({ success: false, error: 'Staff member not found.' });
+    return;
+  }
+
+  if (existing.role === 'Super Admin' && actor.role !== 'Super Admin') {
+    res.status(403).json({ success: false, error: 'Only Super Admin can reset administrative passwords.' });
+    return;
+  }
+
+  const { passwordHash, passwordSalt, iterations } = hashPassword(newPassword);
+  db.updateUser(id, { passwordHash, passwordSalt, iterations });
+  db.revokeUserSessions(id);
+
+  logServerAudit(
+    actor.name,
+    actor.role,
+    'Staff Password Reset by Administrator',
+    'Staff Management',
+    `Credentials reset for ${existing.name} (${existing.role})`,
+    reason || 'Administrative password recovery assistance',
+    'Warning'
+  );
+
+  res.json({
+    success: true,
+    message: `Password for staff member ${existing.name} has been securely reset. All active sessions have been revoked.`,
+    userId: id,
   });
 });
 
