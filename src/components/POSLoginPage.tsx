@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../context/StoreContext';
+import { apiFetch } from '../config/api';
 import { ModuleKey } from '../types';
 import {
   Store,
@@ -154,12 +155,12 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
 
     setForgotLoading(true);
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await apiFetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: forgotIdentifier.trim() }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success) {
         setForgotError(data.error || 'Unable to request password reset code. Please try again.');
@@ -174,7 +175,7 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
       }
       setForgotStep('verify');
     } catch {
-      setForgotError('Connection error. Please try again.');
+      setForgotError('Connection error to authentication backend. Please check network.');
     } finally {
       setForgotLoading(false);
     }
@@ -202,7 +203,7 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
 
     setForgotLoading(true);
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await apiFetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -211,7 +212,7 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
           newPassword,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success) {
         setForgotError(data.error || 'Password reset failed. Code may have expired.');
@@ -228,7 +229,7 @@ export const POSLoginPage: React.FC<POSLoginPageProps> = ({ onLoginSuccess, onBa
       setNewPassword('');
       setConfirmPassword('');
     } catch {
-      setForgotError('Failed to complete password reset due to network error.');
+      setForgotError('Failed to complete password reset due to backend connection error.');
     } finally {
       setForgotLoading(false);
     }

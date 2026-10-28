@@ -4,8 +4,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import { defineConfig } from 'vite';
 
+const basePath = process.env.VITE_BASE_PATH || (process.env.GITHUB_PAGES ? '/M-POS-RWANDA/' : '/');
+
 export default defineConfig(() => ({
-  base: '/M-POS-RWANDA/',
+  base: basePath,
   plugins: [
     react(),
     tailwindcss(),

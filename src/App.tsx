@@ -1609,7 +1609,7 @@ const AuthenticatedApp: React.FC<AuthenticatedAppProps> = ({ onSwitchToWebsite }
 };
 
 const MainLayout: React.FC = () => {
-  const { isAuthenticated, setActiveModule } = useStore();
+  const { isAuthenticated, isVerifyingSession, setActiveModule } = useStore();
 
   const isOwnerRoute = (): boolean => {
     if (typeof window !== 'undefined') {
@@ -1699,6 +1699,21 @@ const MainLayout: React.FC = () => {
 
   if (viewMode === 'website') {
     return <PublicWebsiteView onLaunchWebApp={handleLaunchWebApp} />;
+  }
+
+  // Session verification gate
+  if (isVerifyingSession) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans select-none p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg animate-pulse">
+            <Store className="w-6 h-6" />
+          </div>
+          <p className="text-sm font-bold text-slate-200">Verifying secure session...</p>
+          <p className="text-xs text-slate-400">Fresh & More POS Security Gateway</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

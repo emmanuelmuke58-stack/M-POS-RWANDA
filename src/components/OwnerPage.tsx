@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../context/StoreContext';
+import { apiFetch } from '../config/api';
 import { Company, Product, UserAccount } from '../types';
 import {
   Building2,
@@ -91,7 +92,7 @@ export const OwnerPage: React.FC = () => {
 
   // Login form for unauthenticated direct visitors
   const [loginIdentifier, setLoginIdentifier] = useState('admin@freshandmore.rw');
-  const [loginPassword, setLoginPassword] = useState('Pos123!');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -114,19 +115,13 @@ export const OwnerPage: React.FC = () => {
     const verifyAccess = async () => {
       const token = localStorage.getItem('fresh_pos_token');
       if (!token) {
-        if (currentUser.role === 'Super Admin') {
-          setAuthStatus('authorized');
-        } else {
-          setAuthStatus('unauthenticated');
-        }
+        setAuthStatus('unauthenticated');
         return;
       }
 
       try {
-        const res = await fetch('/api/owner/verify', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const res = await apiFetch('/api/owner/verify');
+        const data = await res.json().catch(() => ({}));
         if (res.ok && data.success && data.authorized) {
           setAuthStatus('authorized');
           // Fetch stats
@@ -134,33 +129,21 @@ export const OwnerPage: React.FC = () => {
         } else if (res.status === 403) {
           setAuthStatus('unauthorized');
         } else {
-          if (currentUser.role === 'Super Admin') {
-            setAuthStatus('authorized');
-          } else {
-            setAuthStatus('unauthenticated');
-          }
+          setAuthStatus('unauthenticated');
         }
       } catch {
-        // Fallback to local session check
-        if (currentUser.role === 'Super Admin') {
-          setAuthStatus('authorized');
-        } else {
-          setAuthStatus('unauthorized');
-        }
+        // Strict: never fall back to granting access when backend fails
+        setAuthStatus('unauthenticated');
       }
     };
 
     void verifyAccess();
   }, [currentUser]);
 
-  const fetchServerStats = async (token?: string) => {
-    const activeToken = token || localStorage.getItem('fresh_pos_token');
-    if (!activeToken) return;
+  const fetchServerStats = async (_token?: string) => {
     try {
-      const res = await fetch('/api/owner/stats', {
-        headers: { Authorization: `Bearer ${activeToken}` },
-      });
-      const data = await res.json();
+      const res = await apiFetch('/api/owner/stats');
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success && data.stats) {
         setServerStats(data.stats);
       }

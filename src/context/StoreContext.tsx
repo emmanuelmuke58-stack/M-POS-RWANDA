@@ -61,6 +61,18 @@ import {
   TimeSyncState,
   SUPPORTED_TIMEZONES,
 } from '../services/timeSyncService';
+import { apiFetch, isBackendConfigured } from '../config/api';
+
+export const UNAUTHENTICATED_GUEST: UserAccount = {
+  id: '',
+  name: 'Unauthenticated Staff',
+  role: 'Cashier',
+  email: '',
+  phone: '',
+  branch: 'Main Branch',
+  status: 'Suspended',
+  lastLogin: 'Never',
+};
 
 export interface ToastNotification {
   id: string;
@@ -73,6 +85,7 @@ interface StoreContextType {
   currentUser: UserAccount;
   setCurrentUser: (user: UserAccount) => void;
   isAuthenticated: boolean;
+  isVerifyingSession: boolean;
   authToken: string | null;
   rememberedIdentifier: string;
   setRememberedIdentifier: (id: string) => void;
@@ -240,15 +253,10 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 const STORAGE_KEY = 'fresh_and_more_mpos_v1';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<UserAccount>(INITIAL_USERS[0]);
-  const [authToken, setAuthToken] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('fresh_pos_token');
-    } catch {
-      return null;
-    }
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+  const [currentUser, setCurrentUser] = useState<UserAccount>(UNAUTHENTICATED_GUEST);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isVerifyingSession, setIsVerifyingSession] = useState<boolean>(() => {
     try {
       return Boolean(localStorage.getItem('fresh_pos_token'));
     } catch {
@@ -476,7 +484,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshAuthorizedBusinessUsers = async (token: string, companyId: string) => {
     const requestId = ++staffDirectoryRequestId.current;
     try {
-      const response = await fetch('/api/auth/staff-directory', {
+      const response = await apiFetch('/api/auth/staff-directory', {
         headers: {
           Authorization: `Bearer ${token}`,
           'X-Company-Id': companyId,
@@ -502,38 +510,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Validate existing server session token on initial mount
+  // Validate existing server session token on initial mount against backend
   useEffect(() => {
     const savedToken = localStorage.getItem('fresh_pos_token');
     if (!savedToken) {
       setIsAuthenticated(false);
+      setCurrentUser(UNAUTHENTICATED_GUEST);
+      setIsVerifyingSession(false);
       return;
     }
-    fetch('/api/auth/session', {
+
+    setIsVerifyingSession(true);
+    apiFetch('/api/auth/session', {
       headers: { Authorization: `Bearer ${savedToken}` },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (data.success && data.authenticated && data.user) {
           setIsAuthenticated(true);
-          setCurrentUser((prev) => ({
-            ...prev,
-            ...data.user,
-          }));
+          setCurrentUser(data.user);
+          setAuthToken(savedToken);
           const initialCompanyId = data.user.role === 'Super Admin' ? 'all' : data.user.companyId;
           if (initialCompanyId) {
             void refreshAuthorizedBusinessUsers(savedToken, initialCompanyId);
           }
         } else {
+          // Token is invalid, expired, or revoked
           localStorage.removeItem('fresh_pos_token');
           setAuthToken(null);
           setIsAuthenticated(false);
+          setCurrentUser(UNAUTHENTICATED_GUEST);
           staffDirectoryRequestId.current += 1;
           setAuthorizedBusinessUsers([]);
         }
       })
-      .catch(() => {
-        // Fallback for offline usage: keep current authentication state
+      .catch((err) => {
+        // Strict security: Reject session and never fall back to local or demo authentication
+        localStorage.removeItem('fresh_pos_token');
+        setAuthToken(null);
+        setIsAuthenticated(false);
+        setCurrentUser(UNAUTHENTICATED_GUEST);
+        staffDirectoryRequestId.current += 1;
+        setAuthorizedBusinessUsers([]);
+        console.warn('[Security] Session validation failed:', err);
+      })
+      .finally(() => {
+        setIsVerifyingSession(false);
       });
   }, []);
 
@@ -543,7 +568,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     rememberMe = false
   ): Promise<{ success: boolean; error?: string; redirectModule?: ModuleKey }> => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password, rememberMe }),
@@ -577,10 +602,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setActiveModule(redirectMod);
       notify('success', 'Authentication Successful', `Welcome back, ${data.user.name}`);
       return { success: true, redirectModule: redirectMod };
-    } catch {
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Unable to connect to authentication server. Please check your network connection.';
       return {
         success: false,
-        error: 'Unable to connect to authentication server. Please check your network connection.',
+        error: message,
       };
     }
   };
@@ -588,7 +617,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const logout = async () => {
     try {
       if (authToken) {
-        await fetch('/api/auth/logout', {
+        await apiFetch('/api/auth/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -601,6 +630,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     setAuthToken(null);
     setIsAuthenticated(false);
+    setCurrentUser(UNAUTHENTICATED_GUEST);
     localStorage.removeItem('fresh_pos_token');
     notify('info', 'Logged Out', 'You have been safely logged out of Fresh & More M-POS.');
   };
@@ -671,7 +701,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     body?: any
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -2484,6 +2514,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentUser,
         setCurrentUser,
         isAuthenticated,
+        isVerifyingSession,
         authToken,
         rememberedIdentifier,
         setRememberedIdentifier,

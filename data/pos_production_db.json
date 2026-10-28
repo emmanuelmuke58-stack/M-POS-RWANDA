@@ -1,0 +1,429 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-10-28T15:41:25.888Z",
+  "users": [
+    {
+      "id": "usr-admin-initial",
+      "name": "System Administrator",
+      "role": "Super Admin",
+      "email": "admin@freshandmore.rw",
+      "phone": "+250 788 000 001",
+      "branch": "All Branches",
+      "assignedCompanyIds": [],
+      "status": "Active",
+      "passwordHash": "3431b380f788179a2a3c224c7560d1e7af4e89576ce9b9552eb9aa093487f27736548c9862ced931166336f1eaed0e2557b74c4d2a65ec45806a79751a64b981",
+      "passwordSalt": "d78695dff5b7338274338227f718fc00",
+      "iterations": 100000,
+      "lastLogin": "2026-10-28 15:41:25",
+      "createdAt": "2026-10-28T15:33:54.639Z"
+    },
+    {
+      "id": "usr-cashier-initial",
+      "name": "Marie Claire U.",
+      "role": "Cashier",
+      "companyId": "comp-1",
+      "assignedCompanyIds": [
+        "comp-1"
+      ],
+      "email": "marie@freshandmore.rw",
+      "phone": "+250 785 112 900",
+      "branch": "Main Branch",
+      "status": "Active",
+      "passwordHash": "ae5618ad24ee12091cc0250d9ea8ce6f7784e0c74785f7b21baa7179b8d396cf04b220cbe4d7f50ef75d17b42aa83393246b19dd6e677a0ce0a63da2d7dc9b48",
+      "passwordSalt": "715cc2add73282a566a7521ef0e83e93",
+      "iterations": 100000,
+      "lastLogin": "2026-10-28 15:41:25",
+      "createdAt": "2026-10-28T15:33:54.639Z"
+    },
+    {
+      "id": "usr-owner-initial",
+      "name": "Emmanuel Muke",
+      "role": "Business Owner",
+      "companyId": "comp-1",
+      "assignedCompanyIds": [
+        "comp-1"
+      ],
+      "email": "emmanuel@freshandmore.rw",
+      "phone": "+250 788 300 100",
+      "branch": "All Branches",
+      "status": "Active",
+      "passwordHash": "c5b316ec7215b1484f5f16ccff1576d22c77fddfb3e1a4b3e71b78702ca5c91149c31aadfe087d5fb60191c942063607c68f303de9cb146e9c44c682ecf0e1ba",
+      "passwordSalt": "aa97c414a7319bf139805a464a4bbd28",
+      "iterations": 100000,
+      "lastLogin": "2026-10-28T15:33:54.639Z",
+      "createdAt": "2026-10-28T15:33:54.639Z"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "ced6f42528bff3fd3ec37ce7d1ed3bb116d1b4e77aa78bf79c7b51bb3ac0a0d5",
+      "userId": "usr-cashier-initial",
+      "user": {
+        "id": "usr-cashier-initial",
+        "name": "Marie Claire U.",
+        "role": "Cashier",
+        "companyId": "comp-1",
+        "assignedCompanyIds": [
+          "comp-1"
+        ],
+        "email": "marie@freshandmore.rw",
+        "phone": "+250 785 112 900",
+        "branch": "Main Branch",
+        "status": "Active",
+        "lastLogin": "2026-10-28T15:33:54.639Z",
+        "createdAt": "2026-10-28T15:33:54.639Z"
+      },
+      "createdAt": 1793201673872,
+      "expiresAt": 1793288073872,
+      "rememberMe": false
+    },
+    {
+      "token": "411cb2cf4ace513aa00d8c58ca85241f848e0c3252aea865ab6d664b27ffde4e",
+      "userId": "usr-cashier-initial",
+      "user": {
+        "id": "usr-cashier-initial",
+        "name": "Marie Claire U.",
+        "role": "Cashier",
+        "companyId": "comp-1",
+        "assignedCompanyIds": [
+          "comp-1"
+        ],
+        "email": "marie@freshandmore.rw",
+        "phone": "+250 785 112 900",
+        "branch": "Main Branch",
+        "status": "Active",
+        "lastLogin": "2026-10-28 15:34:33",
+        "createdAt": "2026-10-28T15:33:54.639Z"
+      },
+      "createdAt": 1793202085798,
+      "expiresAt": 1793288485798,
+      "rememberMe": false
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "srv-aud-1793202085887-1bxo",
+      "date": "2026-10-28 15:41:25",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "User Logged Out",
+      "module": "Authentication",
+      "record": "User System Administrator closed session",
+      "reason": "User triggered safe logout",
+      "severity": "Info"
+    },
+    {
+      "id": "srv-aud-1793202085876-9sdr",
+      "date": "2026-10-28 15:41:25",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "Security Violation: Unauthorized Admin Attempt",
+      "module": "Role & User Governance",
+      "record": "GET /api/owner/stats",
+      "reason": "Non-Super Admin (Cashier) attempted to perform Super Admin operation",
+      "severity": "Critical"
+    },
+    {
+      "id": "srv-aud-1793202085872-qtpg",
+      "date": "2026-10-28 15:41:25",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "Security Block: Non-Super Admin Owner Page Access Attempt",
+      "module": "Owner Page Governance",
+      "record": "GET /api/owner/verify",
+      "reason": "User with role Cashier attempted to access Super Admin Owner Page",
+      "severity": "Critical"
+    },
+    {
+      "id": "srv-aud-1793202085869-a0ev",
+      "date": "2026-10-28 15:41:25",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "User Login Succeeded",
+      "module": "Authentication",
+      "record": "User Marie Claire U. (Cashier) via Email",
+      "reason": "Session established (TTL: 24 hours)",
+      "severity": "Info"
+    },
+    {
+      "id": "srv-aud-1793202085795-ibj1",
+      "date": "2026-10-28 15:41:25",
+      "user": "fabricated_user_does_not_exist@freshandmore.rw",
+      "role": "Unknown",
+      "action": "Failed Login: Invalid Credentials",
+      "module": "Authentication",
+      "record": "Identifier: fabricated_user_does_not_exist@freshandmore.rw",
+      "reason": "Unmatched identifier or unknown account",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793202085778-3mtx",
+      "date": "2026-10-28 15:41:25",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793202085704-c5l7",
+      "date": "2026-10-28 15:41:25",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793202085629-grlt",
+      "date": "2026-10-28 15:41:25",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793202085551-y19b",
+      "date": "2026-10-28 15:41:25",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "User Login Succeeded",
+      "module": "Authentication",
+      "record": "User System Administrator (Super Admin) via Email",
+      "reason": "Session established (TTL: 24 hours)",
+      "severity": "Info"
+    },
+    {
+      "id": "srv-aud-1793201673957-0nu2",
+      "date": "2026-10-28 15:34:33",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "User Logged Out",
+      "module": "Authentication",
+      "record": "User System Administrator closed session",
+      "reason": "User triggered safe logout",
+      "severity": "Info"
+    },
+    {
+      "id": "srv-aud-1793201673948-bt88",
+      "date": "2026-10-28 15:34:33",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "Security Violation: Unauthorized Admin Attempt",
+      "module": "Role & User Governance",
+      "record": "GET /api/owner/stats",
+      "reason": "Non-Super Admin (Cashier) attempted to perform Super Admin operation",
+      "severity": "Critical"
+    },
+    {
+      "id": "srv-aud-1793201673946-gibv",
+      "date": "2026-10-28 15:34:33",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "Security Block: Non-Super Admin Owner Page Access Attempt",
+      "module": "Owner Page Governance",
+      "record": "GET /api/owner/verify",
+      "reason": "User with role Cashier attempted to access Super Admin Owner Page",
+      "severity": "Critical"
+    },
+    {
+      "id": "srv-aud-1793201673944-xgny",
+      "date": "2026-10-28 15:34:33",
+      "user": "Marie Claire U.",
+      "role": "Cashier",
+      "action": "User Login Succeeded",
+      "module": "Authentication",
+      "record": "User Marie Claire U. (Cashier) via Email",
+      "reason": "Session established (TTL: 24 hours)",
+      "severity": "Info"
+    },
+    {
+      "id": "srv-aud-1793201673870-2d1b",
+      "date": "2026-10-28 15:34:33",
+      "user": "fabricated_user_does_not_exist@freshandmore.rw",
+      "role": "Unknown",
+      "action": "Failed Login: Invalid Credentials",
+      "module": "Authentication",
+      "record": "Identifier: fabricated_user_does_not_exist@freshandmore.rw",
+      "reason": "Unmatched identifier or unknown account",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793201673853-2lox",
+      "date": "2026-10-28 15:34:33",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793201673780-3du6",
+      "date": "2026-10-28 15:34:33",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793201673706-yt9v",
+      "date": "2026-10-28 15:34:33",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "Failed Login: Incorrect Password",
+      "module": "Authentication",
+      "record": "User usr-admin-initial",
+      "reason": "Password hash mismatch (strict verification enforced)",
+      "severity": "Warning"
+    },
+    {
+      "id": "srv-aud-1793201673632-vtzc",
+      "date": "2026-10-28 15:34:33",
+      "user": "System Administrator",
+      "role": "Super Admin",
+      "action": "User Login Succeeded",
+      "module": "Authentication",
+      "record": "User System Administrator (Super Admin) via Email",
+      "reason": "Session established (TTL: 24 hours)",
+      "severity": "Info"
+    }
+  ],
+  "companies": [
+    {
+      "id": "comp-1",
+      "name": "Fresh & More Supermarket",
+      "code": "FMS-KGL",
+      "businessType": "Supermarket / Grocery Retail",
+      "tin": "103884920",
+      "phone": "+250 788 310 450",
+      "email": "info@freshandmore.rw",
+      "address": "KG 11 Ave, Kimironko",
+      "city": "Kigali",
+      "country": "Rwanda",
+      "currency": "RWF",
+      "status": "Active",
+      "ownerName": "Emmanuel Muke",
+      "createdAt": "2026-10-28T15:33:54.639Z",
+      "subscription": {
+        "planName": "Enterprise Growth",
+        "planStatus": "Paid & Active",
+        "monthlyFee": 150000,
+        "billingCycle": "Monthly"
+      }
+    },
+    {
+      "id": "comp-2",
+      "name": "Kigali Fresh Mart",
+      "code": "KFM-NYR",
+      "businessType": "Minimarket / Fresh Produce",
+      "tin": "104992110",
+      "phone": "+250 788 450 910",
+      "email": "contact@kigalifreshmart.rw",
+      "address": "KN 3 Rd, Nyarugenge",
+      "city": "Kigali",
+      "country": "Rwanda",
+      "currency": "RWF",
+      "status": "Active",
+      "ownerName": "Alice Mukamana",
+      "createdAt": "2026-10-28T15:33:54.639Z",
+      "subscription": {
+        "planName": "Professional Retail",
+        "planStatus": "Paid & Active",
+        "monthlyFee": 85000,
+        "billingCycle": "Monthly"
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "p-1",
+      "companyId": "comp-1",
+      "name": "Inyange Whole Milk 1L",
+      "sku": "MILK-INY-01",
+      "barcode": "6001000101",
+      "category": "Dairy & Eggs",
+      "sellingPrice": 1200,
+      "costPrice": 950,
+      "wholesalePrice": 1100,
+      "stock": 85,
+      "minStockAlert": 20,
+      "unit": "L",
+      "status": "Active",
+      "taxRate": 18,
+      "supplier": "Rwanda Dairy Ltd"
+    },
+    {
+      "id": "p-2",
+      "companyId": "comp-1",
+      "name": "Fresh French Bread Baguette",
+      "sku": "BAK-BAG-02",
+      "barcode": "6001000102",
+      "category": "Bakery",
+      "sellingPrice": 800,
+      "costPrice": 500,
+      "stock": 35,
+      "minStockAlert": 10,
+      "unit": "pcs",
+      "status": "Active",
+      "supplier": "Kigali Bakery Supply"
+    },
+    {
+      "id": "p-3",
+      "companyId": "comp-1",
+      "name": "Kinazi Cassava Flour 5kg",
+      "sku": "FLR-KIN-03",
+      "barcode": "6001000103",
+      "category": "Grains & Flours",
+      "sellingPrice": 4500,
+      "costPrice": 3600,
+      "wholesalePrice": 4200,
+      "stock": 42,
+      "minStockAlert": 15,
+      "unit": "bag",
+      "status": "Active",
+      "supplier": "Kinazi Grain Mill"
+    },
+    {
+      "id": "p-kfm-1",
+      "companyId": "comp-2",
+      "name": "Organic Hass Avocados (kg)",
+      "sku": "KFM-AVO-01",
+      "barcode": "6002000201",
+      "category": "Fresh Produce",
+      "sellingPrice": 2200,
+      "costPrice": 1500,
+      "stock": 65,
+      "minStockAlert": 15,
+      "unit": "kg",
+      "status": "Active",
+      "supplier": "Kigali Produce Cooperative"
+    },
+    {
+      "id": "p-kfm-2",
+      "companyId": "comp-2",
+      "name": "Fresh Passion Fruit Juice 500ml",
+      "sku": "KFM-JUC-02",
+      "barcode": "6002000202",
+      "category": "Beverages",
+      "sellingPrice": 1500,
+      "costPrice": 1000,
+      "stock": 40,
+      "minStockAlert": 10,
+      "unit": "btl",
+      "status": "Active",
+      "supplier": "Nyungwe Juice Works"
+    }
+  ]
+}
