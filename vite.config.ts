@@ -18,9 +18,9 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['apple-touch-icon.png', 'icon.svg'],
         manifest: {
-          id: '/',
-          name: 'Fresh & More M-POS',
-          short_name: 'Fresh M-POS',
+          id: '/M-POS-RWANDA/',
+start_url: '/M-POS-RWANDA/',
+scope: '/M-POS-RWANDA/',
           description: 'High-speed handheld Mobile Point of Sale (M-POS) for retail and grocery checkouts.',
           theme_color: '#0c4a26',
           background_color: '#0c4a26',
